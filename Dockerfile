@@ -34,6 +34,8 @@ RUN mkdir /opt/clang+llvm-7.0.1/ && \
     done && \
     cp /opt/clang+llvm-7.0.1/lib/libomp.so /opt/clang+llvm-7.0.1/lib/libomp.so.5
 
+ENV CMAKE_PREFIX_PATH $CMAKE_PREFIX_PATH:/opt/clang+llvm-7.0.1
+
 # CMake
 RUN mkdir /opt/cmake-3.14.5/ && \
     cd /opt/cmake-3.14.5/ && \
@@ -61,6 +63,8 @@ RUN cd /tmp/ && \
     cd / && \
     rm -rf /tmp/boost_1_70_0
 
+ENV CMAKE_PREFIX_PATH $CMAKE_PREFIX_PATH:/opt/boost-1.70.0
+
 # AWS SDK
 RUN mkdir -p /tmp/aws-sdk-cpp && \
     cd /tmp/aws-sdk-cpp && \
@@ -80,6 +84,8 @@ RUN mkdir -p /tmp/aws-sdk-cpp && \
             .. && \
     make -j$(nproc) install && \
     rm -rf /tmp/aws-sdk-cpp
+
+ENV CMAKE_PREFIX_PATH $CMAKE_PREFIX_PATH:/opt/aws-sdk-cpp-1.7
 
 # Build arrow and pyarrow
 RUN mkdir -p /tmp/arrow && \
@@ -118,3 +124,5 @@ RUN mkdir -p /tmp/arrow && \
     cp /tmp/arrow/python/dist/*.whl /opt/arrow-*/share &&\
     cp -r /tmp/arrow/dist/* /opt/arrow-*/ && \
     cd / && rm -rf /tmp/arrow
+
+ENV CMAKE_PREFIX_PATH $CMAKE_PREFIX_PATH:/opt/arrow-0.14
