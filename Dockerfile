@@ -32,7 +32,11 @@ RUN mkdir /opt/clang+llvm-7.0.1/ && \
     do \
         ln -s $PWD/$file /usr/bin/$(basename $file)-7.0; \
     done && \
-    cp /opt/clang+llvm-7.0.1/lib/libomp.so /opt/clang+llvm-7.0.1/lib/libomp.so.5
+    mv /opt/clang+llvm-7.0.1/lib/libomp.so{,.5} && \
+    ln -s libomp.so.5 /opt/clang+llvm-7.0.1/lib/libomp.so && \
+    mv /usr/bin/clang{,-3.6} && mv /usr/bin/clang++{,-3.6} && \
+    update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-7.0 100 && \
+    update-alternatives --install /usr/bin/clang clang /usr/bin/clang-7.0 100
 
 ENV CMAKE_PREFIX_PATH $CMAKE_PREFIX_PATH:/opt/clang+llvm-7.0.1
 
@@ -46,16 +50,15 @@ RUN mkdir /opt/cmake-3.14.5/ && \
         ln -s $PWD/$file /usr/bin/$(basename $file); \
     done
 
-RUN alternatives --set gcc $(which gcc72) && \
-    alternatives --set g++ $(which g++72)
 
 # Boost
 RUN cd /tmp/ && \
     wget --progress=dot:giga https://dl.bintray.com/boostorg/release/1.70.0/source/boost_1_70_0.tar.gz -O - \
         | tar -xz && \
     cd /tmp/boost_1_70_0 && \
-    ./bootstrap.sh --prefix=/opt/boost-1.70.0 && \
+    ./bootstrap.sh --prefix=/opt/boost-1.70.0 --with-toolset=clang && \
     ./b2 -j$(nproc) \
+        toolset=clang cxxflags="-std=c++17" \
         --with-filesystem \
         --with-program_options \
         --with-system \
@@ -118,8 +121,9 @@ RUN mkdir -p /tmp/arrow && \
             .. && \
     make -j$(nproc) install && \
     cd /tmp/arrow/python && \
-    PYARROW_WITH_PARQUET=1 ARROW_HOME=/tmp/arrow/dist \
-        python3 setup.py build_ext --bundle-arrow-cpp bdist_wheel && \
+    CXX=clang++-7.0 CC=clang-7.0 \
+        PYARROW_WITH_PARQUET=1 ARROW_HOME=/tmp/arrow/dist \
+            python3 setup.py build_ext --bundle-arrow-cpp bdist_wheel && \
     mkdir -p /opt/arrow-0.14/share && \
     cp /tmp/arrow/python/dist/*.whl /opt/arrow-*/share &&\
     cp -r /tmp/arrow/dist/* /opt/arrow-*/ && \
