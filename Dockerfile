@@ -80,7 +80,7 @@ RUN mkdir -p /tmp/aws-sdk-cpp && \
     CXX=clang++-7.0 CC=clang-7.0 \
         cmake \
             -DBUILD_ONLY="s3" \
-            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_BUILD_TYPE=Release \
             -DCPP_STANDARD=17 \
             -DENABLE_TESTING=OFF \
             -DCUSTOM_MEMORY_MANAGEMENT=OFF \
@@ -123,7 +123,7 @@ RUN mkdir -p /tmp/arrow && \
     CXXFLAGS="-Wl,-rpath=/opt/boost-1.70.0/lib/" \
         CXX=clang++-7.0 CC=clang-7.0 \
             cmake \
-                -DCMAKE_BUILD_TYPE=Debug \
+                -DCMAKE_BUILD_TYPE=Release \
                 -DCMAKE_CXX_STANDARD=17 \
                 -DCMAKE_INSTALL_PREFIX=/tmp/arrow/dist \
                 -DCMAKE_INSTALL_LIBDIR=lib \
