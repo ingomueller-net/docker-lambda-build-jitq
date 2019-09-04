@@ -61,6 +61,8 @@ RUN cd /tmp/ && \
         toolset=clang cxxflags="-std=c++17" \
         --with-filesystem \
         --with-program_options \
+        # Needed by arrow
+        --with-regex \
         --with-system \
         install && \
     cd / && \
@@ -95,33 +97,54 @@ RUN mkdir -p /tmp/arrow && \
     cd /tmp/arrow && \
     wget --progress=dot:giga https://github.com/apache/arrow/archive/apache-arrow-0.14.0.tar.gz -O - \
         | tar -xz --strip-components=1 && \
+    { \
+        echo 'diff --git a/cpp/cmake_modules/BuildUtils.cmake b/cpp/cmake_modules/BuildUtils.cmake'; \
+        echo 'index ecfa593a0..c2b744766 100644'; \
+        echo '--- a/cpp/cmake_modules/BuildUtils.cmake'; \
+        echo '+++ b/cpp/cmake_modules/BuildUtils.cmake'; \
+        echo '@@ -251,6 +251,13 @@ function(ADD_ARROW_LIB LIB_NAME)'; \
+        echo '                                      SOVERSION'; \
+        echo '                                      "${ARROW_SO_VERSION}")'; \
+        echo ''; \
+        echo '+    target_link_libraries(${LIB_NAME}_objlib'; \
+        echo '+                          LINK_PUBLIC'; \
+        echo '+                          "$<BUILD_INTERFACE:${ARG_SHARED_LINK_LIBS}>"'; \
+        echo '+                          "$<INSTALL_INTERFACE:${ARG_SHARED_INSTALL_INTERFACE_LIBS}>"'; \
+        echo '+                          LINK_PRIVATE'; \
+        echo '+                          ${ARG_SHARED_PRIVATE_LINK_LIBS})'; \
+        echo '+'; \
+        echo '     target_link_libraries(${LIB_NAME}_shared'; \
+        echo '                           LINK_PUBLIC'; \
+        echo '                           "$<BUILD_INTERFACE:${ARG_SHARED_LINK_LIBS}>"'; \
+    } | patch -p1 && \
     pip3 install -r /tmp/arrow/python/requirements-build.txt && \
     mkdir -p /tmp/arrow/cpp/build && \
     cd /tmp/arrow/cpp/build && \
-    CXX=clang++-7.0 CC=clang-7.0 \
-        cmake \
-            -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_CXX_STANDARD=17 \
-            -DCMAKE_INSTALL_PREFIX=/tmp/arrow/dist \
-            -DCMAKE_INSTALL_LIBDIR=lib \
-            -DBOOST_SOURCE=BUNDLED \
-            -DARROW_WITH_RAPIDJSON=ON \
-            -DARROW_PARQUET=ON \
-            -DARROW_PYTHON=ON \
-            -DARROW_FLIGHT=OFF \
-            -DARROW_GANDIVA=OFF \
-            -DARROW_BUILD_UTILITIES=OFF \
-            -DARROW_CUDA=OFF \
-            -DARROW_ORC=OFF \
-            -DARROW_JNI=OFF \
-            -DARROW_TENSORFLOW=OFF \
-            -DARROW_HDFS=OFF \
-            -DARROW_BUILD_TESTS=OFF \
-            -DARROW_RPATH_ORIGIN=ON \
-            .. && \
+    CXXFLAGS="-Wl,-rpath=/opt/boost-1.70.0/lib/" \
+        CXX=clang++-7.0 CC=clang-7.0 \
+            cmake \
+                -DCMAKE_BUILD_TYPE=Debug \
+                -DCMAKE_CXX_STANDARD=17 \
+                -DCMAKE_INSTALL_PREFIX=/tmp/arrow/dist \
+                -DCMAKE_INSTALL_LIBDIR=lib \
+                -DARROW_WITH_RAPIDJSON=ON \
+                -DARROW_PARQUET=ON \
+                -DARROW_PYTHON=ON \
+                -DARROW_FLIGHT=OFF \
+                -DARROW_GANDIVA=OFF \
+                -DARROW_BUILD_UTILITIES=OFF \
+                -DARROW_CUDA=OFF \
+                -DARROW_ORC=OFF \
+                -DARROW_JNI=OFF \
+                -DARROW_TENSORFLOW=OFF \
+                -DARROW_HDFS=OFF \
+                -DARROW_BUILD_TESTS=OFF \
+                -DARROW_RPATH_ORIGIN=ON \
+                .. && \
     make -j$(nproc) install && \
     cd /tmp/arrow/python && \
-    CXX=clang++-7.0 CC=clang-7.0 \
+    CXXFLAGS="-Wl,-rpath=/opt/boost-1.70.0/lib/" \
+        CXX=clang++-7.0 CC=clang-7.0 \
         PYARROW_WITH_PARQUET=1 ARROW_HOME=/tmp/arrow/dist \
             python3 setup.py build_ext --bundle-arrow-cpp bdist_wheel && \
     mkdir -p /opt/arrow-0.14/share && \
