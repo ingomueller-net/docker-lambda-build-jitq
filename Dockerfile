@@ -58,7 +58,7 @@ RUN cd /tmp/ && \
     cd /tmp/boost_1_70_0 && \
     ./bootstrap.sh --prefix=/opt/boost-1.70.0 --with-toolset=clang && \
     ./b2 -j$(nproc) \
-        toolset=clang cxxflags="-std=c++17" \
+        toolset=clang cxxflags="-std=c++17 -D_GLIBCXX_USE_CXX11_ABI" \
         --with-filesystem \
         --with-program_options \
         # Needed by arrow
@@ -77,7 +77,7 @@ RUN mkdir -p /tmp/aws-sdk-cpp && \
         | tar -xz --strip-components=1 && \
     mkdir -p /tmp/aws-sdk-cpp/build && \
     cd /tmp/aws-sdk-cpp/build && \
-    CXX=clang++-7.0 CC=clang-7.0 \
+    CXX=clang++-7.0 CC=clang-7.0 CXXFLAGS=-D_GLIBCXX_USE_CXX11_ABI \
         cmake \
             -DBUILD_ONLY="s3" \
             -DCMAKE_BUILD_TYPE=Release \
@@ -120,7 +120,7 @@ RUN mkdir -p /tmp/arrow && \
     pip3 install -r /tmp/arrow/python/requirements-build.txt && \
     mkdir -p /tmp/arrow/cpp/build && \
     cd /tmp/arrow/cpp/build && \
-    CXXFLAGS="-Wl,-rpath=/opt/boost-1.70.0/lib/" \
+    CXXFLAGS="-Wl,-rpath=/opt/boost-1.70.0/lib/ -D_GLIBCXX_USE_CXX11_ABI" \
         CXX=clang++-7.0 CC=clang-7.0 \
             cmake \
                 -DCMAKE_BUILD_TYPE=Release \
@@ -143,7 +143,7 @@ RUN mkdir -p /tmp/arrow && \
                 .. && \
     make -j$(nproc) install && \
     cd /tmp/arrow/python && \
-    CXXFLAGS="-Wl,-rpath=/opt/boost-1.70.0/lib/" \
+    CXXFLAGS="-Wl,-rpath=/opt/boost-1.70.0/lib/ -D_GLIBCXX_USE_CXX11_ABI" \
         CXX=clang++-7.0 CC=clang-7.0 \
         PYARROW_WITH_PARQUET=1 ARROW_HOME=/tmp/arrow/dist \
             python3 setup.py build_ext --bundle-arrow-cpp bdist_wheel && \
