@@ -50,7 +50,6 @@ RUN mkdir /opt/cmake-3.14.5/ && \
         ln -s $PWD/$file /usr/bin/$(basename $file); \
     done
 
-
 # Boost
 RUN cd /tmp/ && \
     wget --progress=dot:giga https://dl.bintray.com/boostorg/release/1.70.0/source/boost_1_70_0.tar.gz -O - \
@@ -59,11 +58,13 @@ RUN cd /tmp/ && \
     ./bootstrap.sh --prefix=/opt/boost-1.70.0 --with-toolset=clang && \
     ./b2 -j$(nproc) \
         toolset=clang cxxflags="-std=c++17 -D_GLIBCXX_USE_CXX11_ABI" \
-        --with-filesystem \
-        --with-program_options \
         # Needed by arrow
         --with-regex \
+        # Needed by JITQ
+        --with-filesystem \
+        --with-program_options \
         --with-system \
+        --with-stacktrace \
         install && \
     cd / && \
     rm -rf /tmp/boost_1_70_0
