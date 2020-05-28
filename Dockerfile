@@ -24,21 +24,21 @@ RUN touch /var/lib/rpm/* && \
     yum -y clean all
 
 # Clang+LLVM
-RUN mkdir /opt/clang+llvm-7.0.1/ && \
-    cd /opt/clang+llvm-7.0.1/ && \
-    wget --progress=dot:giga http://releases.llvm.org/7.0.1/clang+llvm-7.0.1-x86_64-linux-gnu-ubuntu-16.04.tar.xz -O - \
+RUN mkdir /opt/clang+llvm-9.0.0/ && \
+    cd /opt/clang+llvm-9.0.0/ && \
+    wget --progress=dot:giga http://releases.llvm.org/9.0.0/clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-16.04.tar.xz -O - \
          | tar -x -I xz --strip-components=1 && \
     for file in bin/*; \
     do \
-        ln -s $PWD/$file /usr/bin/$(basename $file)-7.0; \
+        ln -s $PWD/$file /usr/bin/$(basename $file)-9.0; \
     done && \
-    mv /opt/clang+llvm-7.0.1/lib/libomp.so{,.5} && \
-    ln -s libomp.so.5 /opt/clang+llvm-7.0.1/lib/libomp.so && \
+    mv /opt/clang+llvm-9.0.0/lib/libomp.so{,.5} && \
+    ln -s libomp.so.5 /opt/clang+llvm-9.0.0/lib/libomp.so && \
     mv /usr/bin/clang{,-3.6} && mv /usr/bin/clang++{,-3.6} && \
-    update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-7.0 100 && \
-    update-alternatives --install /usr/bin/clang clang /usr/bin/clang-7.0 100
+    update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-9.0 100 && \
+    update-alternatives --install /usr/bin/clang clang /usr/bin/clang-9.0 100
 
-ENV CMAKE_PREFIX_PATH $CMAKE_PREFIX_PATH:/opt/clang+llvm-7.0.1
+ENV CMAKE_PREFIX_PATH $CMAKE_PREFIX_PATH:/opt/clang+llvm-9.0.0
 
 # CMake
 RUN mkdir /opt/cmake-3.14.5/ && \
@@ -52,10 +52,10 @@ RUN mkdir /opt/cmake-3.14.5/ && \
 
 # Boost
 RUN cd /tmp/ && \
-    wget --progress=dot:giga https://dl.bintray.com/boostorg/release/1.70.0/source/boost_1_70_0.tar.gz -O - \
+    wget --progress=dot:giga https://dl.bintray.com/boostorg/release/1.73.0/source/boost_1_73_0.tar.gz -O - \
         | tar -xz && \
-    cd /tmp/boost_1_70_0 && \
-    ./bootstrap.sh --prefix=/opt/boost-1.70.0 --with-toolset=clang && \
+    cd /tmp/boost_1_73_0 && \
+    ./bootstrap.sh --prefix=/opt/boost-1.73.0 --with-toolset=clang && \
     ./b2 -j$(nproc) \
         toolset=clang cxxflags="-std=c++17 -D_GLIBCXX_USE_CXX11_ABI" \
         # Needed by arrow
@@ -67,9 +67,9 @@ RUN cd /tmp/ && \
         --with-stacktrace \
         install && \
     cd / && \
-    rm -rf /tmp/boost_1_70_0
+    rm -rf /tmp/boost_1_73_0
 
-ENV CMAKE_PREFIX_PATH $CMAKE_PREFIX_PATH:/opt/boost-1.70.0
+ENV CMAKE_PREFIX_PATH $CMAKE_PREFIX_PATH:/opt/boost-1.73.0
 
 # AWS SDK
 RUN mkdir -p /tmp/aws-sdk-cpp && \
@@ -78,7 +78,7 @@ RUN mkdir -p /tmp/aws-sdk-cpp && \
         | tar -xz --strip-components=1 && \
     mkdir -p /tmp/aws-sdk-cpp/build && \
     cd /tmp/aws-sdk-cpp/build && \
-    CXX=clang++-7.0 CC=clang-7.0 CXXFLAGS=-D_GLIBCXX_USE_CXX11_ABI \
+    CXX=clang++-9.0 CC=clang-9.0 CXXFLAGS=-D_GLIBCXX_USE_CXX11_ABI \
         cmake \
             -DBUILD_ONLY="s3" \
             -DCMAKE_BUILD_TYPE=Release \
@@ -121,8 +121,8 @@ RUN mkdir -p /tmp/arrow && \
     pip3 install -r /tmp/arrow/python/requirements-build.txt && \
     mkdir -p /tmp/arrow/cpp/build && \
     cd /tmp/arrow/cpp/build && \
-    CXXFLAGS="-Wl,-rpath=/opt/boost-1.70.0/lib/ -D_GLIBCXX_USE_CXX11_ABI" \
-        CXX=clang++-7.0 CC=clang-7.0 \
+    CXXFLAGS="-Wl,-rpath=/opt/boost-1.73.0/lib/ -D_GLIBCXX_USE_CXX11_ABI" \
+        CXX=clang++-9.0 CC=clang-9.0 \
             cmake \
                 -DCMAKE_BUILD_TYPE=Release \
                 -DCMAKE_CXX_STANDARD=17 \
@@ -144,8 +144,8 @@ RUN mkdir -p /tmp/arrow && \
                 .. && \
     make -j$(nproc) install && \
     cd /tmp/arrow/python && \
-    CXXFLAGS="-Wl,-rpath=/opt/boost-1.70.0/lib/ -D_GLIBCXX_USE_CXX11_ABI" \
-        CXX=clang++-7.0 CC=clang-7.0 \
+    CXXFLAGS="-Wl,-rpath=/opt/boost-1.73.0/lib/ -D_GLIBCXX_USE_CXX11_ABI" \
+        CXX=clang++-9.0 CC=clang-9.0 \
         PYARROW_WITH_PARQUET=1 ARROW_HOME=/tmp/arrow/dist \
             python3 setup.py build_ext --bundle-arrow-cpp bdist_wheel && \
     mkdir -p /opt/arrow-0.14/share && \
