@@ -61,6 +61,8 @@ RUN cd /tmp/ && \
         # Needed by arrow
         --with-regex \
         # Needed by JITQ
+        --with-context \
+        --with-fiber \
         --with-filesystem \
         --with-program_options \
         --with-system \
