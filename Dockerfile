@@ -99,38 +99,8 @@ ENV CMAKE_PREFIX_PATH $CMAKE_PREFIX_PATH:/opt/aws-sdk-cpp-1.7
 # Build arrow and pyarrow
 RUN mkdir -p /tmp/arrow && \
     cd /tmp/arrow && \
-    wget --progress=dot:giga https://github.com/apache/arrow/archive/apache-arrow-0.14.1.tar.gz -O - \
+    wget --progress=dot:giga https://github.com/apache/arrow/archive/apache-arrow-4.0.1.tar.gz -O - \
         | tar -xz --strip-components=1 && \
-    { \
-        echo 'diff --git a/cpp/CMakeLists.txt b/cpp/CMakeLists.txt'; \
-        echo 'index d4b90c7bc..7075310a6 100644'; \
-        echo '--- a/cpp/CMakeLists.txt'; \
-        echo '+++ b/cpp/CMakeLists.txt'; \
-        echo '@@ -648,8 +648,8 @@ if(ARROW_STATIC_LINK_LIBS)'; \
-        echo '   add_dependencies(arrow_dependencies ${ARROW_STATIC_LINK_LIBS})'; \
-        echo ' endif()'; \
-        echo ''; \
-        echo '-set(ARROW_SHARED_PRIVATE_LINK_LIBS ${ARROW_STATIC_LINK_LIBS} ${BOOST_SYSTEM_LIBRARY}'; \
-        echo '-                                   ${BOOST_FILESYSTEM_LIBRARY} ${BOOST_REGEX_LIBRARY})'; \
-        echo '+set(ARROW_SHARED_PRIVATE_LINK_LIBS ${ARROW_STATIC_LINK_LIBS} ${BOOST_FILESYSTEM_LIBRARY}'; \
-        echo '+                                   ${BOOST_SYSTEM_LIBRARY} ${BOOST_REGEX_LIBRARY})'; \
-        echo ''; \
-        echo ' list(APPEND ARROW_STATIC_LINK_LIBS ${BOOST_SYSTEM_LIBRARY} ${BOOST_FILESYSTEM_LIBRARY}'; \
-        echo '             ${BOOST_REGEX_LIBRARY})'; \
-        echo 'diff --git a/cpp/thirdparty/versions.txt b/cpp/thirdparty/versions.txt'; \
-        echo 'index d960cb0d0..397a4bd98 100644'; \
-        echo '--- a/cpp/thirdparty/versions.txt'; \
-        echo '+++ b/cpp/thirdparty/versions.txt'; \
-        echo '@@ -28,7 +28,7 @@ BROTLI_VERSION=v1.0.7'; \
-        echo ' BZIP2_VERSION=1.0.6'; \
-        echo ' CARES_VERSION=1.15.0'; \
-        echo ' DOUBLE_CONVERSION_VERSION=v3.1.4'; \
-        echo '-FLATBUFFERS_VERSION=v1.10.0'; \
-        echo '+FLATBUFFERS_VERSION=v1.12.0'; \
-        echo ' GBENCHMARK_VERSION=v1.4.1'; \
-        echo ' GFLAGS_VERSION=v2.2.0'; \
-        echo ' GLOG_VERSION=v0.3.5'; \
-    } | patch -p1 && \
     pip3 install -r /tmp/arrow/python/requirements-build.txt && \
     mkdir -p /tmp/arrow/cpp/build && \
     cd /tmp/arrow/cpp/build && \
@@ -141,7 +111,13 @@ RUN mkdir -p /tmp/arrow && \
                 -DCMAKE_CXX_STANDARD=17 \
                 -DCMAKE_INSTALL_PREFIX=/tmp/arrow/dist \
                 -DCMAKE_INSTALL_LIBDIR=lib \
+                -DARROW_WITH_BROTLI=ON \
+                -DARROW_WITH_BZ2=ON \
+                -DARROW_WITH_LZ4=ON \
                 -DARROW_WITH_RAPIDJSON=ON \
+                -DARROW_WITH_SNAPPY=ON \
+                -DARROW_WITH_ZLIB=ON \
+                -DARROW_WITH_ZSTD=ON \
                 -DARROW_PARQUET=ON \
                 -DARROW_PYTHON=ON \
                 -DARROW_FLIGHT=OFF \
@@ -161,9 +137,10 @@ RUN mkdir -p /tmp/arrow && \
         CXX=clang++ CC=clang \
         PYARROW_WITH_PARQUET=1 ARROW_HOME=/tmp/arrow/dist \
             python3 setup.py build_ext --bundle-arrow-cpp bdist_wheel && \
-    mkdir -p /opt/arrow-0.14/share && \
+    mkdir -p /opt/arrow-4.0.1/share && \
     cp /tmp/arrow/python/dist/*.whl /opt/arrow-*/share &&\
     cp -r /tmp/arrow/dist/* /opt/arrow-*/ && \
+    ln -s arrow /opt/arrow-4.0.1/lib/cmake/parquet && \
     cd / && rm -rf /tmp/arrow
 
-ENV CMAKE_PREFIX_PATH $CMAKE_PREFIX_PATH:/opt/arrow-0.14
+ENV CMAKE_PREFIX_PATH $CMAKE_PREFIX_PATH:/opt/arrow-4.0.1
