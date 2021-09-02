@@ -75,10 +75,8 @@ RUN cd /tmp/ && \
 ENV CMAKE_PREFIX_PATH $CMAKE_PREFIX_PATH:/opt/boost-1.76.0
 
 # AWS SDK
-RUN mkdir -p /tmp/aws-sdk-cpp && \
-    cd /tmp/aws-sdk-cpp && \
-    wget --progress=dot:giga https://github.com/aws/aws-sdk-cpp/archive/1.7.138.tar.gz -O - \
-        | tar -xz --strip-components=1 && \
+RUN git clone --depth 1 --shallow-submodules --recurse-submodules --branch 1.9.94 \
+        https://github.com/aws/aws-sdk-cpp.git /tmp/aws-sdk-cpp/ && \
     mkdir -p /tmp/aws-sdk-cpp/build && \
     cd /tmp/aws-sdk-cpp/build && \
     CXX=clang++ CC=clang CXXFLAGS=-D_GLIBCXX_USE_CXX11_ABI \
@@ -88,13 +86,12 @@ RUN mkdir -p /tmp/aws-sdk-cpp && \
             -DCPP_STANDARD=17 \
             -DENABLE_TESTING=OFF \
             -DCUSTOM_MEMORY_MANAGEMENT=OFF \
-            -DCMAKE_INSTALL_PREFIX=/opt/aws-sdk-cpp-1.7/ \
-            -DAWS_DEPS_INSTALL_DIR:STRING=/opt/aws-sdk-cpp-1.7/ \
+            -DCMAKE_INSTALL_PREFIX=/opt/aws-sdk-cpp-1.9/ \
             .. && \
     make -j$(nproc) install && \
     rm -rf /tmp/aws-sdk-cpp
 
-ENV CMAKE_PREFIX_PATH $CMAKE_PREFIX_PATH:/opt/aws-sdk-cpp-1.7
+ENV CMAKE_PREFIX_PATH $CMAKE_PREFIX_PATH:/opt/aws-sdk-cpp-1.9
 
 # Build arrow and pyarrow
 RUN mkdir -p /tmp/arrow && \
